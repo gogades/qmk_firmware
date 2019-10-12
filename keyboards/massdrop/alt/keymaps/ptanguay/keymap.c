@@ -2,24 +2,51 @@
 
 #define RGBLIGHT_VAL_STEP 17
 
+#define rgblight_set_blue        set_layer_color(170,255,255);
+#define rgblight_set_red         set_layer_color(0,255,255);
+#define rgblight_set_green       set_layer_color (85,  0xFF, 0xFF);
+#define rgblight_set_orange      set_layer_color (0x1E,  0xFF, 0xFF);
+#define rgblight_set_teal        rgblight_sethsv (128,255,128+offset );
+#define rgblight_set_magenta     set_layer_color (0x12C, 0xFF, 0xFF);
+#define rgblight_set_yellow      set_layer_color (43,  0xFF, 0xFF );
+#define rgblight_set_purple      set_layer_color (0x10E, 0xFF, 0xFF);
+#define rgblight_set_white       rgblight_sethsv (0x00,  0x00, 0xFF+offset);
+#define rgblight_set_azure       set_layer_color (132,102,255);
+#define rgblight_set_cyan       set_layer_color (128,255,255);
+
+#define HSV_WHITE 0, 0, 255
+#define HSV_RED 0, 255, 255
+#define HSV_CORAL 11, 176, 255
+#define HSV_ORANGE 28, 255, 255
+#define HSV_GOLDENROD 30, 218, 218
+#define HSV_GOLD 36, 255, 255
+#define HSV_YELLOW 43, 255, 255
+#define HSV_CHARTREUSE 64, 255, 255
+#define HSV_GREEN 85, 255, 255
+#define HSV_SPRINGGREEN 106, 255, 255
+#define HSV_TURQUOISE 123, 90, 112
+#define HSV_TEAL 128, 255, 128
+#define HSV_CYAN 128, 255, 255
+#define HSV_AZURE 132, 102, 255
+#define HSV_BLUE 170, 255, 255
+#define HSV_PURPLE 191, 255, 255
+#define HSV_MAGENTA 213, 255, 255
+#define HSV_PINK 234, 128, 255
+
 #define _WINDOWS 0
 #define _MAC     1
 #define _FUNC    2
 #define _FUNCALT 3
 
 enum alt_keycodes {
-    U_T_AUTO = SAFE_RANGE, //USB Extra Port Toggle Auto Detect / Always Active
-    U_T_AGCR,              //USB Toggle Automatic GCR control
-    DBG_TOG,               //DEBUG Toggle On / Off
-    DBG_MTRX,              //DEBUG Toggle Matrix Prints
-    DBG_KBD,               //DEBUG Toggle Keyboard Prints
-    DBG_MOU,               //DEBUG Toggle Mouse Prints
-    MD_BOOT,               //Restart into bootloader after hold timeout
+    MD_BOOT = SAFE_RANGE, //Restart into bootloader after hold timeout
     WINDOWS,
     MAC
 };
 
 #define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
+
+uint8_t offset = 0;
 
 keymap_config_t keymap_config;
 
@@ -43,9 +70,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [_FUNC] = LAYOUT(
         KC_GRV,               KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  _______, KC_MUTE, \
-        _______,              RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, _______, U_T_AUTO,U_T_AGCR,_______, KC_PSCR, KC_SLCK, KC_PAUS, _______, KC_HOME, \
+        _______,              RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, _______, _______, _______ ,_______, KC_PSCR, KC_SLCK, KC_PAUS, _______, KC_HOME, \
         _______,              RGB_RMOD,RGB_VAD, RGB_MOD, RGB_HUD, RGB_SAD, _______, _______,DF(_WINDOWS), DF(_MAC)   , _______, _______,          _______, KC_INS, \
-        _______,              RGB_TOG, _______, _______, _______, RESET  , TG_NKRO, DBG_TOG, _______, _______, _______, _______,          KC_PGUP, KC_HOME, \
+        _______,              RGB_TOG, _______, _______, _______, RESET  , TG_NKRO, _______, _______, _______, _______, _______,          KC_PGUP, KC_HOME, \
         _______,              _______, _______,                            _______,                            _______, _______, KC_HOME, KC_PGDN, KC_END  \
     ),
     [_FUNCALT] = LAYOUT(
@@ -66,6 +93,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     */
 };
 
+#define MODS_SHIFT  (get_mods() & MOD_BIT(KC_LSHIFT) || get_mods() & MOD_BIT(KC_RSHIFT))
+#define MODS_CTRL  (get_mods() & MOD_BIT(KC_LCTL) || get_mods() & MOD_BIT(KC_RCTRL))
+#define MODS_ALT  (get_mods() & MOD_BIT(KC_LALT) || get_mods() & MOD_BIT(KC_RALT))
+
 // Runs just one time when the keyboard initializes.
 void matrix_init_user(void) {
 };
@@ -74,18 +105,15 @@ void matrix_init_user(void) {
 void matrix_scan_user(void) {
 };
 
-
+void keyboard_post_init_user(void) {
+	rgblight_set_teal
+	rgblight_mode(RGBLIGHT_MODE_STATIC_LIGHT);
+}
 
 void persistent_default_layer_set(uint16_t default_layer) {
 	eeconfig_update_default_layer(default_layer);
 	default_layer_set(default_layer);
 }
-
-
-#define MODS_SHIFT  (get_mods() & MOD_BIT(KC_LSHIFT) || get_mods() & MOD_BIT(KC_RSHIFT))
-#define MODS_CTRL  (get_mods() & MOD_BIT(KC_LCTL) || get_mods() & MOD_BIT(KC_RCTRL))
-#define MODS_ALT  (get_mods() & MOD_BIT(KC_LALT) || get_mods() & MOD_BIT(KC_RALT))
-uint8_t offset = 0;
 
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -125,36 +153,7 @@ else
 rgblight_sethsv(h,s,val);
 }
 
-#define rgblight_set_blue        set_layer_color(170,255,255);
-#define rgblight_set_red         set_layer_color(0,255,255);
-#define rgblight_set_green       set_layer_color (85,  0xFF, 0xFF);
-#define rgblight_set_orange      set_layer_color (0x1E,  0xFF, 0xFF);
-#define rgblight_set_teal        rgblight_sethsv (128,255,128+offset );
-#define rgblight_set_magenta     set_layer_color (0x12C, 0xFF, 0xFF);
-#define rgblight_set_yellow      set_layer_color (43,  0xFF, 0xFF );
-#define rgblight_set_purple      set_layer_color (0x10E, 0xFF, 0xFF);
-#define rgblight_set_white       rgblight_sethsv (0x00,  0x00, 0xFF+offset);
-#define rgblight_set_azure       set_layer_color (132,102,255);
-#define rgblight_set_cyan       set_layer_color (128,255,255);
 
-#define HSV_WHITE 0, 0, 255
-#define HSV_RED 0, 255, 255
-#define HSV_CORAL 11, 176, 255
-#define HSV_ORANGE 28, 255, 255
-#define HSV_GOLDENROD 30, 218, 218
-#define HSV_GOLD 36, 255, 255
-#define HSV_YELLOW 43, 255, 255
-#define HSV_CHARTREUSE 64, 255, 255
-#define HSV_GREEN 85, 255, 255
-#define HSV_SPRINGGREEN 106, 255, 255
-#define HSV_TURQUOISE 123, 90, 112
-#define HSV_TEAL 128, 255, 128
-#define HSV_CYAN 128, 255, 255
-#define HSV_AZURE 132, 102, 255
-#define HSV_BLUE 170, 255, 255
-#define HSV_PURPLE 191, 255, 255
-#define HSV_MAGENTA 213, 255, 255
-#define HSV_PINK 234, 128, 255
 
 layer_state_t layer_state_set_user(layer_state_t state) {
 /*    switch(get_highest_layer(state))
@@ -182,7 +181,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 uint32_t default_layer_state_set_kb(uint32_t state) {
    switch(biton32(state)) {
     case _WINDOWS:
-		rgblight_set_red
+		rgblight_set_teal
 	    break;
     case _MAC:
 		rgblight_set_white
@@ -192,7 +191,3 @@ uint32_t default_layer_state_set_kb(uint32_t state) {
 }
 
 
-void keyboard_post_init_user(void) {
-	rgblight_set_teal
-	rgblight_mode(RGBLIGHT_MODE_STATIC_LIGHT);
-}
