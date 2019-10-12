@@ -2,18 +2,6 @@
 
 #define RGBLIGHT_VAL_STEP 17
 
-#define rgblight_set_blue        set_layer_color(170,255,255);
-#define rgblight_set_red         set_layer_color(0,255,255);
-#define rgblight_set_green       set_layer_color (85,  0xFF, 0xFF);
-#define rgblight_set_orange      set_layer_color (0x1E,  0xFF, 0xFF);
-#define rgblight_set_teal        rgblight_sethsv (128,255,128+offset );
-#define rgblight_set_magenta     set_layer_color (0x12C, 0xFF, 0xFF);
-#define rgblight_set_yellow      set_layer_color (43,  0xFF, 0xFF );
-#define rgblight_set_purple      set_layer_color (0x10E, 0xFF, 0xFF);
-#define rgblight_set_white       rgblight_sethsv (0x00,  0x00, 0xFF+offset);
-#define rgblight_set_azure       set_layer_color (132,102,255);
-#define rgblight_set_cyan       set_layer_color (128,255,255);
-
 #define HSV_WHITE 0, 0, 255
 #define HSV_RED 0, 255, 255
 #define HSV_CORAL 11, 176, 255
@@ -47,6 +35,7 @@ enum alt_keycodes {
 #define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
 
 uint8_t offset = 0;
+uint8_t current_layer=0;
 
 keymap_config_t keymap_config;
 
@@ -69,11 +58,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_LGUI,              KC_LCTL, KC_LALT,                            KC_SPC,                             KC_RALT, MO(2),   KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
     [_FUNC] = LAYOUT(
-        KC_GRV,               KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  _______, KC_MUTE, \
-        _______,              RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, _______, _______, _______ ,_______, KC_PSCR, KC_SLCK, KC_PAUS, _______, KC_HOME, \
-        _______,              RGB_RMOD,RGB_VAD, RGB_MOD, RGB_HUD, RGB_SAD, _______, _______,DF(_WINDOWS), DF(_MAC)   , _______, _______,          _______, KC_INS, \
-        _______,              RGB_TOG, _______, _______, _______, RESET  , TG_NKRO, _______, _______, _______, _______, _______,          KC_PGUP, KC_HOME, \
-        _______,              _______, _______,                            _______,                            _______, _______, KC_HOME, KC_PGDN, KC_END  \
+        KC_GRV,               KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,      KC_F9,     KC_F10,  KC_F11,  KC_F12,  _______, KC_MUTE, \
+        _______,              RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, _______, _______, _______ ,   _______,   KC_PSCR, KC_SLCK, KC_PAUS, _______, KC_HOME, \
+        _______,              RGB_RMOD,RGB_VAD, RGB_MOD, RGB_HUD, RGB_SAD, _______, _______, DF(_WINDOWS),DF(_MAC), _______, _______,          _______, KC_INS, \
+        _______,              RGB_TOG, _______, _______, _______, RESET  , TG_NKRO, _______, _______,    _______,   _______, _______,          KC_PGUP, KC_HOME, \
+        _______,              _______, _______,                            _______,                                 _______, _______, KC_HOME, KC_PGDN, KC_END  \
     ),
     [_FUNCALT] = LAYOUT(
         _______,              _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, KC_ESC , \
@@ -97,63 +86,68 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #define MODS_CTRL  (get_mods() & MOD_BIT(KC_LCTL) || get_mods() & MOD_BIT(KC_RCTRL))
 #define MODS_ALT  (get_mods() & MOD_BIT(KC_LALT) || get_mods() & MOD_BIT(KC_RALT))
 
-// Runs just one time when the keyboard initializes.
-void matrix_init_user(void) {
-};
+struct hsv {
+    uint8_t h;
+    uint8_t s;
+    uint8_t v;
+} layer_color[2];
 
-// Runs constantly in the background, in a loop.
-void matrix_scan_user(void) {
-};
+void set_layer_color(void) {
+    rgblight_sethsv(layer_color[current_layer].h,
+        layer_color[current_layer].s,
+        layer_color[current_layer].v);
+}
+
 
 void keyboard_post_init_user(void) {
-	rgblight_set_teal
-	rgblight_mode(RGBLIGHT_MODE_STATIC_LIGHT);
+    rgblight_mode(RGBLIGHT_MODE_STATIC_LIGHT);
+    layer_color[_WINDOWS].h= 128;
+    layer_color[_WINDOWS].s = 255;
+    layer_color[_WINDOWS].v = 128;
+
+    layer_color[_MAC].h= 0;
+    layer_color[_MAC].s = 0;
+    layer_color[_MAC].v = 255;
+
+    current_layer = _WINDOWS;
+    set_layer_color();
+
 }
 
-void persistent_default_layer_set(uint16_t default_layer) {
-	eeconfig_update_default_layer(default_layer);
-	default_layer_set(default_layer);
+void calc(uint8_t offset) {
+    int tmp = layer_color[current_layer].v + offset;
+    if(tmp > 255) {
+        tmp = 255;
+    } else if (tmp < 0) {
+        tmp =0;
+    }
+    layer_color[current_layer].v = tmp;
 }
-
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
 
     switch (keycode) {
         case RGB_VAI:
-            offset = offset+RGBLIGHT_VAL_STEP;
+            calc(RGBLIGHT_VAL_STEP);
+
             return true;
         case RGB_VAD:
-            layer_state_set_user(layer_state);
-            offset = offset-RGBLIGHT_VAL_STEP;
+            calc(0-RGBLIGHT_VAL_STEP);
             return true;
-            case MD_BOOT:
-                if (record->event.pressed) {
-                    key_timer = timer_read32();
-                } else {
-                    if (timer_elapsed32(key_timer) >= 500) {
-                        reset_keyboard();
-                    }
+        case MD_BOOT:
+            if (record->event.pressed) {
+                key_timer = timer_read32();
+            } else {
+                if (timer_elapsed32(key_timer) >= 500) {
+                    reset_keyboard();
                 }
-                return false;
-            default:
-                return true; //Process all other keycodes normally
+            }
+            return false;
+        default:
+            return true; //Process all other keycodes normally
     }
 }
-
-void set_layer_color(uint8_t h, uint8_t s, uint8_t v) {
-uint8_t val;
-int tmp = v+offset;
-if( tmp > 255)
-	val=255;
-else if(tmp < 0 )
-	val=0;
-else
-	val = tmp;
-rgblight_sethsv(h,s,val);
-}
-
-
 
 layer_state_t layer_state_set_user(layer_state_t state) {
 /*    switch(get_highest_layer(state))
@@ -179,14 +173,10 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 }
 
 uint32_t default_layer_state_set_kb(uint32_t state) {
-   switch(biton32(state)) {
-    case _WINDOWS:
-		rgblight_set_teal
-	    break;
-    case _MAC:
-		rgblight_set_white
-	    break;
-   }
+
+    current_layer= biton32(state);
+    set_layer_color();
+
    return state;
 }
 
