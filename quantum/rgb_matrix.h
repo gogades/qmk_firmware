@@ -116,6 +116,12 @@ void        rgb_matrix_decrease_hue(void);
 void        rgb_matrix_increase_sat(void);
 void        rgb_matrix_decrease_sat(void);
 void        rgb_matrix_increase_val(void);
+uint8_t     rgb_matrix_get_hue(void);
+void        rgb_matrix_set_hue(uint8_t);
+uint8_t     rgb_matrix_get_val(void);
+void        rgb_matrix_set_val(uint8_t);
+uint8_t     rgb_matrix_get_sat(void);
+void        rgb_matrix_set_sat(uint8_t);
 void        rgb_matrix_decrease_val(void);
 void        rgb_matrix_increase_speed(void);
 void        rgb_matrix_decrease_speed(void);
@@ -148,6 +154,9 @@ void        rgb_matrix_sethsv_noeeprom(uint16_t hue, uint8_t sat, uint8_t val);
 #    define rgblight_mode(mode) rgb_matrix_mode(mode)
 #    define rgblight_mode_noeeprom(mode) rgb_matrix_mode_noeeprom(mode)
 #    define rgblight_get_mode() rgb_matrix_get_mode()
+#    define rgblight_get_hue() rgb_matrix__get_hue()
+#    define rgblight_get_sat() rgb_matrix_get_sat()
+#    define rgblight_get_val() rgb_matrix_get_val()
 #endif
 
 typedef struct {
