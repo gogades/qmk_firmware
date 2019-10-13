@@ -130,11 +130,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case RGB_VAI:
             calc(RGBLIGHT_VAL_STEP);
-
-            return true;
+            set_layer_color();
+            return false;
         case RGB_VAD:
             calc(0-RGBLIGHT_VAL_STEP);
-            return true;
+            rgblight_increase_val();
+
+            set_layer_color();
+            return false;
         case MD_BOOT:
             if (record->event.pressed) {
                 key_timer = timer_read32();
