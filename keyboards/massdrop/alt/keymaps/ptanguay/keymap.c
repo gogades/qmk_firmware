@@ -1,5 +1,7 @@
 #include QMK_KEYBOARD_H
 
+#include "macros.h"
+
 #define RGBLIGHT_VAL_STEP 17
 
 #define HSV_WHITE 0, 0, 255
@@ -93,8 +95,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 #define MODS_SHIFT  (get_mods() & MOD_BIT(KC_LSHIFT) || get_mods() & MOD_BIT(KC_RSHIFT))
-#define MODS_CTRL  (get_mods() & MOD_BIT(KC_LCTL) || get_mods() & MOD_BIT(KC_RCTRL))
-#define MODS_ALT  (get_mods() & MOD_BIT(KC_LALT) || get_mods() & MOD_BIT(KC_RALT))
+#define MODS_CTRL   (get_mods() & MOD_BIT(KC_LCTL)   || get_mods() & MOD_BIT(KC_RCTRL))
+#define MODS_ALT    (get_mods() & MOD_BIT(KC_LALT)   || get_mods() & MOD_BIT(KC_RALT))
+#define MODS_GUI    (get_mods() & MOD_BIT(KC_LGUI)   || get_mods() & MOD_BIT(KC_RGUI))
 
 struct hsv {
     uint8_t h;
@@ -135,6 +138,27 @@ void save_val(uint8_t offset) {
     layer_color[current_layer].v = rgblight_get_val();
 }
 
+bool process_macros(uint16_t keycode, keyrecord_t *record) {
+    // macros trigger on ctrl+gui
+    if(record->event.pressed && MODS_CTRL && MODS_GUI) {
+        unregister_code(KC_LCTL);
+        unregister_code(KC_RCTRL);
+        unregister_code(KC_LGUI);
+        unregister_code(KC_RGUI);
+        switch (keycode) {
+            case KC_1:
+                SEND_STRING(MACRO_OCNA);
+                return false;
+            break;
+            case KC_2:
+                SEND_STRING(MACRO_UNIX);
+                return false;
+            break;
+        }
+    }
+    return true;
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
 
@@ -172,7 +196,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             return false;
         default:
-            return true; //Process all other keycodes normally
+            return process_macros(keycode, record);
     }
 }
 
