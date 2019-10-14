@@ -38,6 +38,10 @@ enum alt_keycodes {
     KC_FN
 };
 
+enum tap_dances {
+    HOME_END = 0,
+    PGUP_ESC
+};
 #define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
 
 uint8_t offset = 0;
@@ -46,22 +50,29 @@ uint8_t previous_layer=0;
 
 keymap_config_t keymap_config;
 
+qk_tap_dance_action_t tap_dance_actions[] = {
+  //Tap once for End, twice for home
+  [HOME_END]  = ACTION_TAP_DANCE_DOUBLE(KC_END, KC_HOME),
+  //Tap once for PGUP, twice for Escape
+  [PGUP_ESC]  = ACTION_TAP_DANCE_DOUBLE(KC_PGUP, KC_ESC)
+};
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* windows layout */
     [_WINDOWS] = LAYOUT(
-        KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, KC_EQL,  KC_BSPC, KC_PGUP,  \
+        KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, KC_EQL,  KC_BSPC, TD(PGUP_ESC),  \
         LT(2,KC_TAB),         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS, KC_PGDN , \
         ALT_TAB,              KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,  KC_DEL, \
-        KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,          KC_UP,   LT(3,KC_END), \
+        KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,          KC_UP,   TD(HOME_END), \
         KC_LCTL,              KC_LGUI, KC_LALT,                            KC_SPC,                             KC_RALT, KC_FN,   KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
     /* mac layout */
     /* so far we only swap lctl and gui */
     [_MAC] = LAYOUT(
-        KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, KC_EQL,  KC_BSPC, KC_PGUP,  \
+        KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, KC_EQL,  KC_BSPC, TD(PGUP_ESC),  \
         LT(2,KC_TAB),         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS, KC_PGDN , \
         CMD_TAB,              KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,  KC_DEL, \
-        KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,          KC_UP,   LT(3,KC_END), \
+        KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,          KC_UP,   TD(HOME_END), \
         KC_LGUI,              KC_LCTL, KC_LALT,                            KC_SPC,                             KC_RALT, KC_FN,   KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
     [_FUNC] = LAYOUT(
