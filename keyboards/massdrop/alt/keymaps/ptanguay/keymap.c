@@ -1,5 +1,12 @@
 #include QMK_KEYBOARD_H
 
+/*
+tap dance one shot layer code taken from:
+https://github.com/walkerstop/qmk_firmware/blob/fanoe/keyboards/wheatfield/blocked65/keymaps/walker/keymap.c
+https://www.reddit.com/r/MechanicalKeyboards/comments/aq5a3c/qmk_tap_dancing_and_oneshot_layers_quick_demo/
+I added my color handling stuff and switch to rshift
+*/
+
 #include "macros.h"
 
 #define RGBLIGHT_VAL_STEP 17
@@ -23,11 +30,15 @@
 #define HSV_MAGENTA 213, 255, 255
 #define HSV_PINK 234, 128, 255
 
+#define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
+
 #define _WINDOWS 0
 #define _MAC     1
 #define _FUNC    2
 #define _FUNCALT 3
 #define _RGB     4
+
+void set_layer_color(void);
 
 enum alt_keycodes {
     MD_BOOT = SAFE_RANGE, //Restart into bootloader after hold timeout
@@ -40,9 +51,23 @@ enum alt_keycodes {
 
 enum tap_dances {
     HOME_END = 0,
+    RSHIFT_OSLFUNC,
     PGUP_ESC
 };
-#define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
+
+typedef struct {
+  bool is_press_action;
+  int state;
+} tap;
+
+enum {
+  SINGLE_TAP = 1,
+  SINGLE_HOLD = 2,
+  DOUBLE_TAP = 3,
+  DOUBLE_HOLD = 4,
+  TRIPLE_TAP = 5,
+  TRIPLE_HOLD = 6
+};
 
 uint8_t offset = 0;
 uint8_t current_layer=0;
@@ -50,30 +75,97 @@ uint8_t previous_layer=0;
 
 keymap_config_t keymap_config;
 
+static tap rsfttap_state = {
+  .is_press_action = true,
+  .state = 0
+};
+
+int cur_dance (qk_tap_dance_state_t *state) {
+  if (state->count == 1) {
+    if (state->pressed) return SINGLE_HOLD;
+    else return SINGLE_TAP;
+  }
+  else if (state->count == 2) {
+    if (state->pressed) return DOUBLE_HOLD;
+    else return DOUBLE_TAP;
+  }
+  else if (state->count == 3) {
+    if (state->interrupted || !state->pressed)  return TRIPLE_TAP;
+    else return TRIPLE_HOLD;
+  }
+  else return 8;
+}
+
+
+void shift_finished (qk_tap_dance_state_t *state, void *user_data) {
+  rsfttap_state.state = cur_dance(state);
+  switch (rsfttap_state.state) {
+    case SINGLE_TAP:
+        set_oneshot_layer(_FUNC, ONESHOT_START);
+        clear_oneshot_layer_state(ONESHOT_PRESSED);
+        previous_layer = current_layer;
+        current_layer = _FUNC;
+        set_layer_color();
+	break;
+    case SINGLE_HOLD:
+        register_code(KC_RSFT);
+        break;
+    case DOUBLE_TAP:
+        set_oneshot_layer(_FUNC, ONESHOT_START);
+        set_oneshot_layer(_FUNC, ONESHOT_PRESSED);
+        previous_layer = current_layer;
+        current_layer = _FUNC;
+        set_layer_color();
+        break;
+    case DOUBLE_HOLD:
+        register_code(KC_RSFT);
+        layer_on(_FUNC);
+        previous_layer = current_layer;
+        current_layer = _FUNC;
+        set_layer_color();
+        break;
+    //Last case is for fast typing. Assuming your key is `f`:
+    //For example, when typing the word `buffer`, and you want to make sure that you send `ff` and not `Esc`.
+    //In order to type `ff` when typing fast, the next character will have to be hit within the `TAPPING_TERM`, which by default is 200ms.
+  }
+}
+
+void shift_reset (qk_tap_dance_state_t *state, void *user_data) {
+  switch (rsfttap_state.state) {
+    case SINGLE_TAP: break;
+    case SINGLE_HOLD: unregister_code(KC_RSFT); break;
+    case DOUBLE_TAP: break;
+    case DOUBLE_HOLD: layer_off(1); unregister_code(KC_RSFT); break;
+  }
+  rsfttap_state.state = 0;
+}
+
+
 qk_tap_dance_action_t tap_dance_actions[] = {
   //Tap once for End, twice for home
   [HOME_END]  = ACTION_TAP_DANCE_DOUBLE(KC_END, KC_HOME),
   //Tap once for PGUP, twice for Escape
-  [PGUP_ESC]  = ACTION_TAP_DANCE_DOUBLE(KC_PGUP, KC_ESC)
+  [PGUP_ESC]  = ACTION_TAP_DANCE_DOUBLE(KC_PGUP, KC_ESC),
+  [RSHIFT_OSLFUNC] = ACTION_TAP_DANCE_FN_ADVANCED(NULL,shift_finished, shift_reset)
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* windows layout */
     [_WINDOWS] = LAYOUT(
-        KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, KC_EQL,  KC_BSPC, TD(PGUP_ESC),  \
-        LT(2,KC_TAB),         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS, KC_PGDN , \
-        ALT_TAB,              KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,  KC_DEL, \
-        KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,          KC_UP,   TD(HOME_END), \
-        KC_LCTL,              KC_LGUI, KC_LALT,                            KC_SPC,                             KC_RALT, KC_FN,   KC_LEFT, KC_DOWN, KC_RGHT  \
+        KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS,           KC_EQL,  KC_BSPC, TD(PGUP_ESC),  \
+        LT(2,KC_TAB),         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,           KC_RBRC, KC_BSLS, KC_PGDN , \
+        ALT_TAB,              KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,           KC_ENT,           KC_DEL, \
+        KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, TD(RSHIFT_OSLFUNC),                  KC_UP,   TD(HOME_END), \
+        KC_LCTL,              KC_LGUI, KC_LALT,                            KC_SPC,                             KC_RALT, KC_FN,             KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
     /* mac layout */
     /* so far we only swap lctl and gui */
     [_MAC] = LAYOUT(
-        KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, KC_EQL,  KC_BSPC, TD(PGUP_ESC),  \
-        LT(2,KC_TAB),         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS, KC_PGDN , \
-        CMD_TAB,              KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,  KC_DEL, \
-        KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,          KC_UP,   TD(HOME_END), \
-        KC_LGUI,              KC_LCTL, KC_LALT,                            KC_SPC,                             KC_RALT, KC_FN,   KC_LEFT, KC_DOWN, KC_RGHT  \
+        KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS,          KC_EQL,  KC_BSPC, TD(PGUP_ESC),  \
+        LT(2,KC_TAB),         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,          KC_RBRC, KC_BSLS, KC_PGDN , \
+        CMD_TAB,              KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,           KC_DEL, \
+        KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, TD(RSHIFT_OSLFUNC),                 KC_UP,   TD(HOME_END), \
+        KC_LGUI,              KC_LCTL, KC_LALT,                            KC_SPC,                             KC_RALT, KC_FN,            KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
     [_FUNC] = LAYOUT(
         KC_GRV,               KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,      KC_F9,     KC_F10,  KC_F11,  KC_F12,  _______, KC_MUTE, \
@@ -234,6 +326,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 }
             }
             return false;
+	case KC_TRNS:
+	case KC_NO:
+	    /* Always cancel one-shot layer when another key gets pressed */
+	    if (record->event.pressed && is_oneshot_layer_active())
+	    clear_oneshot_layer_state(ONESHOT_OTHER_KEY_PRESSED);
+	    return true;
         default:
             return process_macros(keycode, record);
     }
