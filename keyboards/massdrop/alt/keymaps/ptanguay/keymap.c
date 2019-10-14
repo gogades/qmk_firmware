@@ -143,6 +143,7 @@ void save_val(uint8_t offset) {
 bool process_macros(uint16_t keycode, keyrecord_t *record) {
     // macros trigger on ctrl+gui
     if(record->event.pressed && MODS_CTRL && MODS_GUI) {
+        // unregister the modifiers that triggered the macros
         unregister_code(KC_LCTL);
         unregister_code(KC_RCTRL);
         unregister_code(KC_LGUI);
@@ -200,19 +201,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case ALT_TAB:
         case CMD_TAB:
             if( record->event.pressed ) {
-                key_timer = timer_read();
+                key_timer = timer_read32();
                 register_code(KC_LCTL);
-
             } else {
                 unregister_code(KC_LCTL);
-                if(timer_elapsed(key_timer) < TAPPING_TERM) {
+                if(timer_elapsed32(key_timer) < TAPPING_TERM) {
                     if(keycode == CMD_TAB)  // mac
                         SEND_STRING(SS_LGUI(SS_TAP(X_TAB)));
                     else // windows
                         SEND_STRING(SS_LALT(SS_TAP(X_TAB)));
                 }
             }
-            return false;
+            return true;
             break;
         case MD_BOOT:
             if (record->event.pressed) {
