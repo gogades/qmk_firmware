@@ -51,7 +51,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_WINDOWS] = LAYOUT(
         KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, KC_EQL,  KC_BSPC, KC_PGUP,  \
         LT(2,KC_TAB),         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS, KC_PGDN , \
-        MT(MOD_LCTL,KC_CAPS), KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,  KC_DEL, \
+        ALT_TAB,              KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,  KC_DEL, \
         KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,          KC_UP,   LT(3,KC_END), \
         KC_LCTL,              KC_LGUI, KC_LALT,                            KC_SPC,                             KC_RALT, KC_FN,   KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
@@ -60,7 +60,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_MAC] = LAYOUT(
         KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, KC_EQL,  KC_BSPC, KC_PGUP,  \
         LT(2,KC_TAB),         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS, KC_PGDN , \
-        MT(MOD_LCTL,KC_CAPS), KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,  KC_DEL, \
+        CMD_TAB,              KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,  KC_DEL, \
         KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,          KC_UP,   LT(3,KC_END), \
         KC_LGUI,              KC_LCTL, KC_LALT,                            KC_SPC,                             KC_RALT, KC_FN,   KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
@@ -153,6 +153,11 @@ bool process_macros(uint16_t keycode, keyrecord_t *record) {
                 return false;
             break;
             case KC_2:
+                SEND_STRING(MACRO_OPCCLOUD);
+                SEND_STRING(SS_TAP(X_ENTER));
+                return false;
+            break;
+            case KC_3:
                 SEND_STRING(MACRO_UNIX);
                 return false;
             break;
@@ -193,12 +198,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             save_val(0-RGBLIGHT_VAL_STEP);
             return true;
         case ALT_TAB:
-            // SEND_STRING(SS_LALT(SS_TAP(X_TAB)));
-            SEND_STRING(SS_TAP(X_ENTER));
-            return false;
-            break;
         case CMD_TAB:
-            SEND_STRING(SS_LGUI(SS_TAP(X_TAB)));
+            if( record->event.pressed ) {
+                key_timer = timer_read();
+                register_code(KC_LCTL);
+
+            } else {
+                unregister_code(KC_LCTL);
+                if(timer_elapsed(key_timer) < TAPPING_TERM) {
+                    if(keycode == CMD_TAB)  // mac
+                        SEND_STRING(SS_LGUI(SS_TAP(X_TAB)));
+                    else // windows
+                        SEND_STRING(SS_LALT(SS_TAP(X_TAB)));
+                }
+            }
             return false;
             break;
         case MD_BOOT:
