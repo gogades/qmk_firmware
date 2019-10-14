@@ -33,6 +33,8 @@ enum alt_keycodes {
     MD_BOOT = SAFE_RANGE, //Restart into bootloader after hold timeout
     WINDOWS,
     MAC,
+    CMD_TAB,
+    ALT_TAB,
     KC_FN
 };
 
@@ -154,6 +156,10 @@ bool process_macros(uint16_t keycode, keyrecord_t *record) {
                 SEND_STRING(MACRO_UNIX);
                 return false;
             break;
+            case KC_S:
+                SEND_STRING(SS_LCTRL(SS_LSFT(SS_TAP(X_SYSTEM_POWER))));
+                return false;
+            break;
         }
     }
     return true;
@@ -186,6 +192,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case RGB_VAD:
             save_val(0-RGBLIGHT_VAL_STEP);
             return true;
+        case ALT_TAB:
+            // SEND_STRING(SS_LALT(SS_TAP(X_TAB)));
+            SEND_STRING(SS_TAP(X_ENTER));
+            return false;
+            break;
+        case CMD_TAB:
+            SEND_STRING(SS_LGUI(SS_TAP(X_TAB)));
+            return false;
+            break;
         case MD_BOOT:
             if (record->event.pressed) {
                 key_timer = timer_read32();
