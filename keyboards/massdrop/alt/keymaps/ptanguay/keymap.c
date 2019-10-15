@@ -252,16 +252,16 @@ bool process_macros(uint16_t keycode, keyrecord_t *record) {
         unregister_code(KC_LGUI);
         unregister_code(KC_RGUI);
         switch (keycode) {
-            case KC_1:
+            case KC_EQL:
                 SEND_STRING(MACRO_OCNA);
                 return false;
             break;
-            case KC_2:
+            case KC_MINS:
                 SEND_STRING(MACRO_OPCCLOUD);
                 SEND_STRING(SS_TAP(X_ENTER));
                 return false;
             break;
-            case KC_3:
+            case KC_0:
                 SEND_STRING(MACRO_UNIX);
                 return false;
             break;
@@ -301,6 +301,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case RGB_VAD:
             save_val(0-RGBLIGHT_VAL_STEP);
             return true;
+        case KC_Y:
+            if( record->event.pressed && MODS_ALT ) {
+                unregister_code(KC_LALT);
+                unregister_code(KC_RALT);
+                SEND_STRING(":+1: ");
+                return false;
+            } else {
+                return true;
+            }
+            break;
         case ALT_TAB:
         case CMD_TAB:
             if( record->event.pressed ) {
