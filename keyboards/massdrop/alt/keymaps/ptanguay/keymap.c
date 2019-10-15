@@ -159,7 +159,10 @@ void ctltab_finished (qk_tap_dance_state_t *state, void *user_data) {
 	register_mods(MOD_BIT(KC_LCTL));
 	break;
     case DOUBLE_TAP:
-	SEND_STRING(SS_LGUI(SS_TAP(X_TAB)));
+        if(current_layer == _WINDOWS)
+            SEND_STRING(SS_LALT(SS_TAP(X_TAB)));
+        else
+            SEND_STRING(SS_LGUI(SS_TAP(X_TAB)));
 	break;
   }
 }
