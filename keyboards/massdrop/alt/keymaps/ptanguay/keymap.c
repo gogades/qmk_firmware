@@ -44,14 +44,13 @@ enum alt_keycodes {
     MD_BOOT = SAFE_RANGE, //Restart into bootloader after hold timeout
     WINDOWS,
     MAC,
-    CMD_TAB,
-    ALT_TAB,
     KC_FN
 };
 
 enum tap_dances {
     HOME_END = 0,
     RSHIFT_OSLFUNC,
+    CTL_TAB,
     PGUP_ESC
 };
 
@@ -76,6 +75,11 @@ uint8_t previous_layer=0;
 keymap_config_t keymap_config;
 
 static tap rsfttap_state = {
+  .is_press_action = true,
+  .state = 0
+};
+
+static tap ctltap_state = {
   .is_press_action = true,
   .state = 0
 };
@@ -133,19 +137,50 @@ void shift_finished (qk_tap_dance_state_t *state, void *user_data) {
 void shift_reset (qk_tap_dance_state_t *state, void *user_data) {
   switch (rsfttap_state.state) {
     case SINGLE_TAP: break;
+           layer_off(_FUNC);
+           current_layer = previous_layer;
+           set_layer_color();
+           break;
     case SINGLE_HOLD: unregister_code(KC_RSFT); break;
     case DOUBLE_TAP: break;
-    case DOUBLE_HOLD: layer_off(1); unregister_code(KC_RSFT); break;
+    case DOUBLE_HOLD:
+           layer_off(_FUNC);
+           current_layer = previous_layer;
+           set_layer_color();
+           unregister_code(KC_RSFT); break;
   }
   rsfttap_state.state = 0;
 }
 
+void ctltab_finished (qk_tap_dance_state_t *state, void *user_data) {
+  ctltap_state.state = cur_dance(state);
+  switch (ctltap_state.state) {
+    case SINGLE_HOLD:
+	register_mods(MOD_BIT(KC_LCTL));
+	break;
+    case DOUBLE_TAP:
+	SEND_STRING(SS_LGUI(SS_TAP(X_TAB)));
+	break;
+  }
+}
+
+void ctltab_reset (qk_tap_dance_state_t *state, void *user_data) {
+  switch (ctltap_state.state) {
+    case SINGLE_TAP:
+      break;
+    case SINGLE_HOLD:
+      unregister_mods(MOD_BIT(KC_LCTL)); // for a layer-tap key, use `layer_off(_MY_LAYER)` here
+      break;
+  }
+  ctltap_state.state = 0;
+}
 
 qk_tap_dance_action_t tap_dance_actions[] = {
   //Tap once for End, twice for home
   [HOME_END]  = ACTION_TAP_DANCE_DOUBLE(KC_END, KC_HOME),
   //Tap once for PGUP, twice for Escape
   [PGUP_ESC]  = ACTION_TAP_DANCE_DOUBLE(KC_PGUP, KC_ESC),
+  [CTL_TAB] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, ctltab_finished, ctltab_reset),
   [RSHIFT_OSLFUNC] = ACTION_TAP_DANCE_FN_ADVANCED(NULL,shift_finished, shift_reset)
 };
 
@@ -154,7 +189,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_WINDOWS] = LAYOUT(
         KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS,           KC_EQL,  KC_BSPC, TD(PGUP_ESC),  \
         LT(2,KC_TAB),         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,           KC_RBRC, KC_BSLS, KC_PGDN , \
-        ALT_TAB,              KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,           KC_ENT,           KC_DEL, \
+        TD(CTL_TAB),          KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,           KC_ENT,           KC_DEL, \
         KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, TD(RSHIFT_OSLFUNC),                  KC_UP,   TD(HOME_END), \
         KC_LCTL,              KC_LGUI, KC_LALT,                            KC_SPC,                             KC_RALT, KC_FN,             KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
@@ -163,7 +198,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_MAC] = LAYOUT(
         KC_GESC,              KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS,          KC_EQL,  KC_BSPC, TD(PGUP_ESC),  \
         LT(2,KC_TAB),         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,          KC_RBRC, KC_BSLS, KC_PGDN , \
-        CMD_TAB,              KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,           KC_DEL, \
+        TD(CTL_TAB),          KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,           KC_DEL, \
         KC_LSFT,              KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, TD(RSHIFT_OSLFUNC),                 KC_UP,   TD(HOME_END), \
         KC_LGUI,              KC_LCTL, KC_LALT,                            KC_SPC,                             KC_RALT, KC_FN,            KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
@@ -310,22 +345,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             } else {
                 return true;
             }
-            break;
-        case ALT_TAB:
-        case CMD_TAB:
-            if( record->event.pressed ) {
-                key_timer = timer_read32();
-                register_code(KC_LCTL);
-            } else {
-                unregister_code(KC_LCTL);
-                if(timer_elapsed32(key_timer) < TAPPING_TERM) {
-                    if(keycode == CMD_TAB)  // mac
-                        SEND_STRING(SS_LGUI(SS_TAP(X_TAB)));
-                    else // windows
-                        SEND_STRING(SS_LALT(SS_TAP(X_TAB)));
-                }
-            }
-            return true;
             break;
         case MD_BOOT:
             if (record->event.pressed) {
