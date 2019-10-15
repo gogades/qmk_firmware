@@ -273,7 +273,9 @@ void keyboard_post_init_user(void) {
     layer_color[_FUNCALT].s = 255;
     layer_color[_FUNCALT].v = 255;
 
-    current_layer = _WINDOWS;
+    current_layer = _MAC;
+    if(eeconfig_read_default_layer() != current_layer)
+        set_single_persistent_default_layer(current_layer);
     set_layer_color();
 }
 
