@@ -273,11 +273,12 @@ void keyboard_post_init_user(void) {
     layer_color[_FUNCALT].s = 255;
     layer_color[_FUNCALT].v = 255;
 
-    if(eeconfig_read_default_layer() == _WINDOWS)
-        current_layer=_MAC;
-    else
-        current_layer=_WINDOWS;
-    set_single_persistent_default_layer(current_layer);
+    // if(eeconfig_read_default_layer() == _WINDOWS)
+        // current_layer=_MAC;
+    // else
+        // current_layer=_WINDOWS;
+    // set_single_persistent_default_layer(current_layer);
+    current_layer = _MAC;
     set_layer_color();
 }
 
@@ -294,6 +295,11 @@ bool process_macros(uint16_t keycode, keyrecord_t *record) {
         unregister_code(KC_LGUI);
         unregister_code(KC_RGUI);
         switch (keycode) {
+            case KC_BSLS:
+                SEND_STRING(MACRO_KEEPASS);
+                SEND_STRING(SS_TAP(X_ENTER));
+                return false;
+            break;
             case KC_EQL:
                 SEND_STRING(MACRO_OCNA);
                 return false;
