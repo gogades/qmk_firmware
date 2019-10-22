@@ -209,7 +209,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_GRV,               KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,      KC_F9,     KC_F10,  KC_F11,  KC_F12,  _______, KC_MUTE, \
         _______,              RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, _______, _______, _______ ,   _______,   KC_PSCR, KC_SLCK, KC_PAUS, _______, KC_HOME, \
         _______,              RGB_RMOD,RGB_VAD, RGB_MOD, RGB_HUD, RGB_SAD, _______, _______, DF(_WINDOWS),DF(_MAC), _______, _______,          _______, KC_INS, \
-        _______,              RGB_TOG, _______, _______, _______, RESET  , TG_NKRO, _______, _______,    _______,   _______, _______,          KC_PGUP, KC_HOME, \
+        _______,              RGB_TOG, _______, _______, _______, MD_BOOT, TG_NKRO, _______, _______,    _______,   _______, _______,          KC_PGUP, KC_HOME, \
         _______,              _______, _______,                            _______,                                 _______, _______, KC_HOME, KC_PGDN, KC_END  \
     ),
     [_RGB] = LAYOUT(
@@ -283,34 +283,42 @@ void save_val(uint8_t offset) {
     layer_color[current_layer].v = rgblight_get_val();
 }
 
+void clear_pressed_mods(void) {
+    unregister_code(KC_LCTL);
+    unregister_code(KC_RCTRL);
+    unregister_code(KC_LGUI);
+    unregister_code(KC_RGUI);
+}
+
 bool process_macros(uint16_t keycode, keyrecord_t *record) {
     // macros trigger on ctrl+gui
     if(record->event.pressed && MODS_CTRL && MODS_GUI) {
         // unregister the modifiers that triggered the macros
-        unregister_code(KC_LCTL);
-        unregister_code(KC_RCTRL);
-        unregister_code(KC_LGUI);
-        unregister_code(KC_RGUI);
         switch (keycode) {
             case KC_BSLS:
+                clear_pressed_mods();
                 SEND_STRING(MACRO_KEEPASS);
                 SEND_STRING(SS_TAP(X_ENTER));
                 return false;
             break;
             case KC_EQL:
+                clear_pressed_mods();
                 SEND_STRING(MACRO_OCNA);
                 return false;
             break;
             case KC_MINS:
+                clear_pressed_mods();
                 SEND_STRING(MACRO_OPCCLOUD);
                 SEND_STRING(SS_TAP(X_ENTER));
                 return false;
             break;
             case KC_0:
+                clear_pressed_mods();
                 SEND_STRING(MACRO_UNIX);
                 return false;
             break;
             case KC_S:
+                clear_pressed_mods();
                 SEND_STRING(SS_LCTRL(SS_LSFT(SS_TAP(X_SYSTEM_POWER))));
                 return false;
             break;
